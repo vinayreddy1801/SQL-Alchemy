@@ -1,9 +1,6 @@
 pandas
 python-dotenv
-streamlit
-sqlalchemy
-plotly
+streamlit>=1.42.0
 scikit-learn
 networkx
 pypdf
-altair<5
