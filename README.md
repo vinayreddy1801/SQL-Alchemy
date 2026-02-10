@@ -1,6 +1,8 @@
 # Real-Time Career Intelligence Engine
 
-A production-grade portfolio project that monitors job market data, calculates an 'Opportunity Score' using advanced SQL, and forecasts skill demand.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://sql-alchemy-ewsjttuibhpgscpgguvvln.streamlit.app)
+
+A production-grade portfolio project that monitors live job market data, calculates an 'Opportunity Score' using advanced SQL, and forecasts skill demand.
 
 ## Features
 
