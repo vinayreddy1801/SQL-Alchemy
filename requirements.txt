@@ -1,0 +1,8 @@
+pandas
+python-dotenv
+streamlit
+sqlalchemy
+plotly
+scikit-learn
+networkx
+pypdf
