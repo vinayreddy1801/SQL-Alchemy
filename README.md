@@ -6,6 +6,7 @@ A production-grade portfolio project that monitors live job market data, calcula
 
 ## Features
 
+- **Live Demo**: [Click here to launch the App](https://sql-alchemy-ewsjttuibhpgscpgguvvln.streamlit.app)
 - **Job Market Monitoring**: Ingests job data into a local database.
 - **Opportunity Score**: Calculates high-pay/high-demand skills using SQL CTEs.
 - **Sentinel Reliability**: Data integrity checks (null handling, schema rules) before ingestion.
