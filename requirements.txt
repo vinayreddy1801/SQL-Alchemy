@@ -6,3 +6,4 @@ plotly
 scikit-learn
 networkx
 pypdf
+altair<5
