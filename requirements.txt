@@ -1,6 +1,8 @@
 pandas
 python-dotenv
 streamlit>=1.42.0
+sqlalchemy
+plotly
 scikit-learn
 networkx
 pypdf
