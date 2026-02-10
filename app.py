@@ -230,41 +230,79 @@ elif page == "🚀 Career Simulator":
     current_stack = st.multiselect("Current Tech Stack", skill_options, default=['SQL'])
     
     if current_stack:
-        # Simple Logic for Portfolio:
-        # Find the skill that has the highest correlation (weight) in the network graph 
-        # BUT is not in the current stack, and has a high average salary.
+        # Smarter Logic: 
+        # Score = (0.7 * Correlation) + (0.3 * Salary)
+        # We prize "Natural Fit" slightly more than raw "Money" for career pathing
         
-        network_df = run_query(queries.NETWORK_QUERY)
         salary_df = run_query(queries.VOLATILITY_QUERY)
+        candidates = {}
         
-        recommendations = []
-        
+        # 1. Broad Parameter Scan
         for skill in current_stack:
-            # Find neighbors
-            neighbors = network_df[network_df['source'] == skill]['target'].tolist() + network_df[network_df['target'] == skill]['source'].tolist()
+            neighbors = run_query(queries.NEIGHBORS_QUERY, params={"target_skill": skill})
             
-            for potential in neighbors:
-                if potential not in current_stack:
-                    # Get its salary
-                    try:
-                        salary_row = salary_df[salary_df['skills'] == potential].iloc[0]
-                        raw_salary = salary_row['raw_avg_salary']
-                        recommendations.append({
-                            "Skill to Learn": potential,
-                            "Synergy Source": skill,
-                            "Projected Salary Boost": raw_salary
-                        })
-                    except:
-                        continue
-                        
-        if recommendations:
-            rec_df = pd.DataFrame(recommendations).sort_values("Projected Salary Boost", ascending=False).drop_duplicates("Skill to Learn").head(3)
-            
-            st.subheader("💡 Top Recommended Upskills")
-            
-            for index, row in rec_df.iterrows():
-                st.success(f"**Learn {row['Skill to Learn']}** (Synergy with {row['Synergy Source']})")
-                st.metric("Potential Salary Access", f"${row['Projected Salary Boost']:,.0f}")
+            for index, row in neighbors.iterrows():
+                neighbor = row['neighbor']
+                weight = row['weight']
                 
+                if neighbor in current_stack:
+                    continue
+                    
+                # Look up salary
+                try:
+                    salary_row = salary_df[salary_df['skills'] == neighbor].iloc[0]
+                    raw_salary = salary_row['raw_avg_salary']
+                    
+                    if neighbor not in candidates:
+                        candidates[neighbor] = {
+                            "skill": neighbor,
+                            "total_weight": 0,
+                            "salary": raw_salary,
+                            "sources": []
+                        }
+                    candidates[neighbor]['total_weight'] += weight
+                    candidates[neighbor]['sources'].append(skill)
+                except:
+                    continue
+
+        if candidates:
+            df_candidates = pd.DataFrame(candidates.values())
+            
+            # Max scaling
+            max_weight = df_candidates['total_weight'].max()
+            max_salary = df_candidates['salary'].max()
+            
+            df_candidates['norm_weight'] = df_candidates['total_weight'] / max_weight
+            df_candidates['norm_salary'] = df_candidates['salary'] / max_salary
+            
+            df_candidates['score'] = (df_candidates['norm_weight'] * 0.7) + (df_candidates['norm_salary'] * 0.3)
+            
+            df_candidates = df_candidates.sort_values('score', ascending=False).head(5)
+            
+            st.subheader("💡 Strategic Recommendations")
+            
+            col1, col2 = st.columns(2)
+            
+            # TOP PICK (Highest Score)
+            top_pick = df_candidates.iloc[0]
+            with col1:
+                st.success(f"⭐ **Top Pick: {top_pick['skill']}**")
+                st.caption(f"Strongest logic flow from {', '.join(top_pick['sources'])}.")
+                st.metric("Projected Salary", f"${top_pick['salary']:,.0f}")
+                
+            # HIGH VALUE (Highest Salary in top 5)
+            df_salary = df_candidates.sort_values('salary', ascending=False)
+            high_value = df_salary.iloc[0]
+            if high_value['skill'] == top_pick['skill'] and len(df_candidates) > 1:
+                high_value = df_salary.iloc[1]
+                
+            with col2:
+                st.info(f"💰 **High Value Alternative: {high_value['skill']}**")
+                st.caption("Lower correlation, but higher market valuation.")
+                st.metric("Projected Salary", f"${high_value['salary']:,.0f}")
+
+            with st.expander("View Analysis Logic"):
+                st.dataframe(df_candidates[['skill', 'score', 'salary', 'total_weight']].style.format({'salary': '${:,.0f}', 'score': '{:.2f}'}), use_container_width=True)
+            
         else:
-            st.info("Add more skills to see recommendations.")
+            st.warning("Not enough data to generate path. Try adding more skills.")

@@ -52,10 +52,25 @@ FROM skills_job_dim sj1
 JOIN skills_job_dim sj2 ON sj1.job_id = sj2.job_id
 JOIN skills_dim a ON sj1.skill_id = a.skill_id
 JOIN skills_dim b ON sj2.skill_id = b.skill_id
-WHERE a.skills < b.skills -- Avoid duplicates (A-B vs B-A) and self-loops
+WHERE a.skills < b.skills
 GROUP BY a.skills, b.skills
 ORDER BY weight DESC
 LIMIT 50;
+"""
+
+NEIGHBORS_QUERY = """
+SELECT 
+    b.skills as neighbor,
+    COUNT(*) as weight
+FROM skills_job_dim sj1
+JOIN skills_job_dim sj2 ON sj1.job_id = sj2.job_id
+JOIN skills_dim a ON sj1.skill_id = a.skill_id
+JOIN skills_dim b ON sj2.skill_id = b.skill_id
+WHERE a.skills = :target_skill
+  AND b.skills != :target_skill
+GROUP BY b.skills
+ORDER BY weight DESC
+LIMIT 10;
 """
 
 HISTORY_QUERY = """
